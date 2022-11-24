@@ -1,5 +1,19 @@
-.ant-layout{
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
+.ant-layout {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  .left {
+  }
+  .main {
+    flex: 1;
+  }
+  .right {
+    margin-left: auto;
+  }
 }

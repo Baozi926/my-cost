@@ -1,0 +1,8 @@
+.sub-page.product-cost {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  .left {
+    flex-basis: 200px;
+  }
+}

@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Input, InputNumber, DatePicker } from "antd";
-import "./Cost.scss";
+import "./MaterialCost.scss";
+import { debounce } from "throttle-debounce";
 
+import dayjs from "dayjs";
 import { v4 as uuidv4 } from "uuid";
 import { getTable } from "../services/dbService";
 
@@ -13,12 +15,22 @@ const store = getTable(COST_LIST, {
   idField: ID_FIELD,
 });
 
+const debounceUpdate = debounce(300, (id, item) => {
+  store.update(id, item);
+});
+
 const Cost = () => {
   const getColRenerer = (field, Component = Input) => {
     return (param) => {
+      let currentVal = param[field];
+
+      if (Component === DatePicker && currentVal) {
+        currentVal = dayjs(currentVal, "YYYY-MM-DD");
+      }
+
       return (
         <Component
-          value={param[field]}
+          value={currentVal}
           style={{ width: "100%" }}
           onChange={(evt, value) => {
             console.log("change", evt, value);
@@ -38,7 +50,9 @@ const Cost = () => {
 
               setList(newList);
 
-              return store.update(param[ID_FIELD], list[index]);
+              debounceUpdate(param[ID_FIELD], list[index]);
+
+              //  store.update(param[ID_FIELD], list[index]);
             }
           }}
         ></Component>
@@ -63,10 +77,10 @@ const Cost = () => {
       title: "number",
       render: getColRenerer("number", InputNumber),
     },
-    // {
-    //   title: "date",
-    //   render: getColRenerer("date", DatePicker),
-    // },
+    {
+      title: "date",
+      render: getColRenerer("date", DatePicker),
+    },
     {
       title: "marks",
       render: getColRenerer("marks"),
@@ -85,17 +99,20 @@ const Cost = () => {
     },
   ];
 
+  const [updating, setUpdating] = useState(false);
+
   const deleteItem = (param) => {
     if (!param) {
       return;
     }
     const id = param[ID_FIELD];
-    store.removeById(param[ID_FIELD]);
-    setList(
-      list.filter((v) => {
-        return v && v[ID_FIELD] !== id;
-      })
-    );
+    store.removeById(param[ID_FIELD]).then(() => {
+      setList(
+        list.filter((v) => {
+          return v && v[ID_FIELD] !== id;
+        })
+      );
+    });
   };
 
   const [list, setList] = useState([]);
@@ -118,17 +135,19 @@ const Cost = () => {
   const addItem = () => {
     const newItem = {
       [ID_FIELD]: uuidv4(),
-      name: "---",
+      name: "",
       // type: "材料",
       cost: 0,
+      number: 0,
       marks: "",
+      date: dayjs().format("YYYY-MM-DD"),
     };
 
     const newList = [newItem, ...list];
 
-    setList(newList);
-
-    store.add(newItem);
+    store.add(newItem).then(() => {
+      setList(newList);
+    });
   };
 
   return (
